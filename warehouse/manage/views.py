@@ -31,8 +31,6 @@ from warehouse.accounts.views import logout
 from warehouse.admin.flags import AdminFlagValue
 from warehouse.email import (
     send_account_deletion_email,
-    send_added_as_collaborator_email,
-    send_collaborator_added_email,
     send_email_verification_email,
     send_password_change_email,
     send_primary_email_change_email,
@@ -43,6 +41,7 @@ from warehouse.email import (
     send_two_factor_removed_email,
     send_unyanked_project_release_email,
     send_yanked_project_release_email,
+    send_project_role_verification_email,
 )
 from warehouse.macaroons.interfaces import IMacaroonService
 from warehouse.manage.forms import (
@@ -66,6 +65,7 @@ from warehouse.packaging.models import (
     ProjectEvent,
     Release,
     Role,
+    RoleInvitationStatus,
 )
 from warehouse.utils.http import is_safe_url
 from warehouse.utils.paginate import paginate_url_factory
@@ -892,15 +892,32 @@ def manage_projects(request):
         return project.created
 
     all_user_projects = user_projects(request)
+    not_approved_project_roles = (
+        request.db.query(Role)
+        .filter(
+            Role.user_id == request.user.id,
+            Role.invitation_status == RoleInvitationStatus.Pending.value,
+        )
+        .with_entities(Role.project_id)
+        .all()
+    )
+    not_approved_project_ids = set(
+        [_role.project_id for _role in not_approved_project_roles]
+    )
+    approved_projects = list(
+        filter(
+            lambda _project: _project.id not in not_approved_project_ids,
+            request.user.projects,
+        )
+    )
     projects_owned = set(
         project.name for project in all_user_projects["projects_owned"]
     )
     projects_sole_owned = set(
         project.name for project in all_user_projects["projects_sole_owned"]
     )
-
     return {
-        "projects": sorted(request.user.projects, key=_key, reverse=True),
+        "projects": sorted(approved_projects, key=_key, reverse=True),
         "projects_owned": projects_owned,
         "projects_sole_owned": projects_sole_owned,
     }
@@ -1477,22 +1494,24 @@ def manage_project_roles(project, request, _form_class=CreateRoleForm):
                 request,
                 owner_users,
                 user=user,
-                submitter=request.user,
-                project_name=project.name,
-                role=form.role_name.data,
+                project=project,
+                role_name=role_name,
+                invitation_status=RoleInvitationStatus.Pending.value,
             )
+            request.db.add(role)
+            request.db.flush()  # in order to get role id
 
-            send_added_as_collaborator_email(
+            # send_project_role_verification_email needs to get request and user as
+            # first args because of the @email_ decorator
+            send_project_role_verification_email(
                 request,
                 user,
-                submitter=request.user,
+                desired_role=role_name,
+                initiator_username=request.user.username,
                 project_name=project.name,
-                role=form.role_name.data,
+                role_id=role.id,
             )
-
-            request.session.flash(
-                f"Added collaborator '{form.username.data}'", queue="success"
-            )
+            request.session.flash("Invitation sent", queue="success")
         form = _form_class(user_service=user_service)
 
     roles = set(request.db.query(Role).join(User).filter(Role.project == project).all())
