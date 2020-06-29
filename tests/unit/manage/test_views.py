@@ -3496,7 +3496,7 @@ class TestManageProjectRoles:
                         "project_id": project.id,
                     }
                 ),
-                token_age=token_service.max_age // 60 // 60,
+                token_age=token_service.max_age,
             )
         ]
 
@@ -3645,7 +3645,7 @@ class TestManageProjectRoles:
                         "project_id": project.id,
                     }
                 ),
-                token_age=token_service.max_age // 60 // 60,
+                token_age=token_service.max_age,
             )
         ]
 
@@ -4006,6 +4006,9 @@ class TestDeleteProjectRoles:
         project = ProjectFactory.create(name="foobar")
         user = UserFactory.create(username="testuser")
         role = RoleFactory.create(user=user, project=project, role_name="Owner")
+        invite = RoleInvitationFactory.create(
+            user=user, project=project, invite_status="accepted"
+        )
 
         db_request.method = "POST"
         db_request.user = UserFactory.create()
@@ -4022,6 +4025,7 @@ class TestDeleteProjectRoles:
             pretend.call("manage.project.roles", project_name=project.name)
         ]
         assert db_request.db.query(Role).all() == []
+        assert invite.invite_status == RoleInvitationStatus.Revoked.value
         assert db_request.session.flash.calls == [
             pretend.call("Removed role", queue="success")
         ]

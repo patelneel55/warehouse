@@ -39,6 +39,7 @@ from warehouse.email import (
     send_email_verification_email,
     send_password_change_email,
     send_primary_email_change_email,
+    send_project_role_verification_email,
     send_removed_project_email,
     send_removed_project_release_email,
     send_removed_project_release_file_email,
@@ -46,7 +47,6 @@ from warehouse.email import (
     send_two_factor_removed_email,
     send_unyanked_project_release_email,
     send_yanked_project_release_email,
-    send_project_role_verification_email,
 )
 from warehouse.macaroons.interfaces import IMacaroonService
 from warehouse.manage.forms import (
@@ -1503,7 +1503,7 @@ def manage_project_roles(project, request, _form_class=CreateRoleForm):
                     initiator_username=request.user.username,
                     project_name=project.name,
                     email_token=token,
-                    token_age=token_service.max_age // 60 // 60,
+                    token_age=token_service.max_age,
                 )
                 project.record_event(
                     tag="project:role:invite",
@@ -1667,6 +1667,13 @@ def delete_project_role(project, request):
             request.session.flash("Cannot remove yourself as Owner", queue="error")
         else:
             request.db.delete(role)
+            role_invite = (
+                request.db.query(RoleInvitation)
+                .filter(RoleInvitation.project == project)
+                .filter(RoleInvitation.user == role.user)
+                .one()
+            )
+            role_invite.invite_status = RoleInvitationStatus.Revoked.value
             request.db.add(
                 JournalEntry(
                     name=project.name,
