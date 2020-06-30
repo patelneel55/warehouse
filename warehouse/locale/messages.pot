@@ -118,6 +118,7 @@ msgid "Invalid token: request a new password reset link"
 msgstr ""
 
 #: warehouse/accounts/views.py:592 warehouse/accounts/views.py:675
+#: warehouse/accounts/views.py:769
 msgid "Invalid token: no token supplied"
 msgstr ""
 
@@ -151,7 +152,7 @@ msgstr ""
 msgid "Invalid token: request a new email verification link"
 msgstr ""
 
-#: warehouse/accounts/views.py:679
+#: warehouse/accounts/views.py:679 warehouse/accounts/views.py:773
 msgid "Invalid token: not an email verification token"
 msgstr ""
 
@@ -173,6 +174,26 @@ msgstr ""
 
 #: warehouse/accounts/views.py:715
 msgid "Email address ${email_address} verified. ${confirm_message}."
+msgstr ""
+
+#: warehouse/accounts/views.py:765
+msgid "Expired token: request a new project role invite"
+msgstr ""
+
+#: warehouse/accounts/views.py:767
+msgid "Invalid token: request a new project role invite"
+msgstr ""
+
+#: warehouse/accounts/views.py:777
+msgid "Invite is not valid"
+msgstr ""
+
+#: warehouse/accounts/views.py:793
+msgid "Role invitation is already assigned or has been revoked."
+msgstr ""
+
+#: warehouse/accounts/views.py:837
+msgid "Added collaborator '${username}'"
 msgstr ""
 
 #: warehouse/manage/views.py:195
