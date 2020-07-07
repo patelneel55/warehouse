@@ -152,7 +152,7 @@ msgstr ""
 msgid "Invalid token: request a new email verification link"
 msgstr ""
 
-#: warehouse/accounts/views.py:679 warehouse/accounts/views.py:773
+#: warehouse/accounts/views.py:679
 msgid "Invalid token: not an email verification token"
 msgstr ""
 
@@ -184,15 +184,23 @@ msgstr ""
 msgid "Invalid token: request a new project role invite"
 msgstr ""
 
+#: warehouse/accounts/views.py:773
+msgid "Invalid token: not a collaboration invitation token"
+msgstr ""
+
 #: warehouse/accounts/views.py:777
 msgid "Invite is not valid"
 msgstr ""
 
-#: warehouse/accounts/views.py:793
-msgid "Role invitation is already assigned or has been revoked."
+#: warehouse/accounts/views.py:792
+msgid "Role invitation has been revoked."
 msgstr ""
 
-#: warehouse/accounts/views.py:837
+#: warehouse/accounts/views.py:794
+msgid "Role invitation is already accepted."
+msgstr ""
+
+#: warehouse/accounts/views.py:855
 msgid "Added collaborator '${username}'"
 msgstr ""
 
