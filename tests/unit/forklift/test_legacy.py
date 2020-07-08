@@ -49,6 +49,7 @@ from warehouse.packaging.models import (
     Release,
     Role,
 )
+from warehouse.packaging.tasks import update_bigquery_release_files
 
 from ...common.db.accounts import EmailFactory, UserFactory
 from ...common.db.classifiers import ClassifierFactory
@@ -1359,6 +1360,14 @@ class TestFileUpload:
                 IMetricsService: metrics,
             }.get(svc)
         )
+        db_request.registry.settings = {
+            "warehouse.release_files_table": "example.pypi.distributions"
+        }
+
+        update_bigquery = pretend.stub(
+            delay=pretend.call_recorder(lambda *a, **kw: None)
+        )
+        db_request.task = pretend.call_recorder(lambda *a, **kw: update_bigquery)
 
         resp = legacy.file_upload(db_request)
 
@@ -1436,6 +1445,8 @@ class TestFileUpload:
                 "10.10.10.40",
             )
         ]
+
+        assert db_request.task.calls == [pretend.call(update_bigquery_release_files)]
 
         assert metrics.increment.calls == [
             pretend.call("warehouse.upload.attempt"),
@@ -1851,9 +1862,7 @@ class TestFileUpload:
         user = UserFactory.create()
         db_request.user = user
         EmailFactory.create(user=user)
-        project = ProjectFactory.create(
-            name="foobar", upload_limit=(60 * 1024 * 1024)  # 60 MB
-        )
+        project = ProjectFactory.create(name="foobar", upload_limit=(100 * 1024 * 1024))
         release = ReleaseFactory.create(project=project, version="1.0")
         RoleFactory.create(user=user, project=project)
 
@@ -1883,7 +1892,7 @@ class TestFileUpload:
         assert db_request.help_url.calls == [pretend.call(_anchor="file-size-limit")]
         assert resp.status_code == 400
         assert resp.status == (
-            "400 File too large. Limit for project 'foobar' is 60 MB. "
+            "400 File too large. Limit for project 'foobar' is 100 MB. "
             "See /the/help/url/ for more information."
         )
 

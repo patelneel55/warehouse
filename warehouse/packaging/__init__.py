@@ -19,7 +19,11 @@ from warehouse.cache.origin import key_factory, receive_set
 from warehouse.manage.tasks import update_role_invitation_status
 from warehouse.packaging.interfaces import IDocsStorage, IFileStorage
 from warehouse.packaging.models import File, Project, Release, Role
-from warehouse.packaging.tasks import compute_trending, update_description_html
+from warehouse.packaging.tasks import (
+    compute_trending,
+    sync_bigquery_release_files,
+    update_description_html,
+)
 
 
 @db.listens_for(User.name, "set")
@@ -97,3 +101,6 @@ def includeme(config):
     # been configured to be able to access BigQuery.
     if config.get_settings().get("warehouse.trending_table"):
         config.add_periodic_task(crontab(minute=0, hour=3), compute_trending)
+
+    if config.get_settings().get("warehouse.release_files_table"):
+        config.add_periodic_task(crontab(minute="*/60"), sync_bigquery_release_files)
