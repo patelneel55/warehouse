@@ -50,6 +50,10 @@
             </span>
             <span class="table__user-text">
               <strong>{{ role.user.username }}</strong>
+              <span class="tfa_status">
+                2FA
+                <i class="fa {{ 'fa-check' if role.user.has_two_factor else 'fa-times' }}" aria-hidden="true"></i>
+              </span>
               {% if role.user.name %}
                 <br><span>{{ role.user.name }}</span>
               {% endif %}

@@ -247,12 +247,24 @@
     .table__user-text {
       margin-left: 10px;
 
-      > * {
+      > *:not(.tfa_status) {
         display: inline-block;
         background-position: 0 1.15em;
         background-repeat: repeat-x;
         background-size: 100% 1.5px;
         @include primary-underlined-link;
+      }
+
+      .tfa_status {
+        display: inline-block;
+        background-position: 0 1.15em;
+        background-repeat: repeat-x;
+        background-size: 100% 1.5px;
+        color: $text-color;
+
+        .fa {
+          font-size: 80%;
+        }
       }
     }
 
